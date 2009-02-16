@@ -1,13 +1,16 @@
-= Contacts Matrix =
+== Contacts (Assoc.Array) ==
 
 Key:
   * primary email
 
 Attr:
-  * secondary emails
+  * email
   * name
-  * secondary names
-  * count to
-  * count from
-  * count cc
-  * count bcc
+  * secondaryEmails
+  * secondaryNames
+  * usernames (split at @ the email address)
+  * countTo
+  * countFrom
+  * countCc
+  * countBcc
+  * topics
