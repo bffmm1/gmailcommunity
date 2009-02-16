@@ -11,7 +11,8 @@ $andreiDb = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
 $aronDb = '../db/aron.henriksson@gmail.com-GoogleMail#database[1]';
 dbChoose();
 
-$logEcho = true;
+#$logEcho = true;
+$logEcho = false;
 $logFilename = './logs/' . array_shift(explode('@', basename($dbFilename))) . '_' . date('YmdHis') . '.txt';
 $log = fopen($logFilename, 'w');
 if ($log) {logMsg('FILE', 'Log opened for writing');}
