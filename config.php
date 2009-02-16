@@ -6,22 +6,22 @@ require('libs/db.php');
 @ob_end_clean();
 register_shutdown_function('shutdown');
 
-global $db_filename, $db;
-$andrei_db = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
-$aron_db = '../db/aron.henriksson@gmail.com-GoogleMail#database[1]';
-db_choose();
+global $dbFilename, $db;
+$andreiDb = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
+$aronDb = '../db/aron.henriksson@gmail.com-GoogleMail#database[1]';
+dbChoose();
 
-$log_echo = true;
-$log_filename = './logs/' . array_shift(explode('@', basename($db_filename))) . '_' . date('YmdHis') . '.txt';
-$log = fopen($log_filename, 'w');
-if ($log) {logmsg('FILE', 'Log opened for writing');}
+$logEcho = true;
+$logFilename = './logs/' . array_shift(explode('@', basename($dbFilename))) . '_' . date('YmdHis') . '.txt';
+$log = fopen($logFilename, 'w');
+if ($log) {logMsg('FILE', 'Log opened for writing');}
 
-if (!$db_filename){
-	logmsg('LOG', 'Database missing');
+if (!$dbFilename){
+	logMsg('LOG', 'Database missing');
 	die();
 } else {
-	logmsg('DB', 'Chosen database: ' . array_shift(explode('@', basename($db_filename))));
-	db_connect();
+	logMsg('DB', 'Chosen database: ' . array_shift(explode('@', basename($dbFilename))));
+	dbConnect();
 }
 
 ?>
