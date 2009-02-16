@@ -1,0 +1,12 @@
+parse_contacts
+  * extract name, primaryEmail
+
+parse_messages
+  * extract c4, c5, c6, c7
+  * regexp into name and email
+  * count to, from, cc, bcc
+
+match_contacts_matrix
+  * ??
+
+convert_utf8
