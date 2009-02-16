@@ -1,22 +1,22 @@
 <?php
 
-function db_choose(){
-	global $andrei_db, $aron_db, $db_filename;
+function dbChoose(){
+	global $andreiDb, $aronDb, $dbFilename;
 	$up = dirname(__FILE__) . '/../';
-	if (file_exists($up . $andrei_db)){
-		$db_filename = $andrei_db;
-	} elseif  (file_exists($up . $aron_db)){
-		$db_filename = $aron_db;
+	if (file_exists($up . $andreiDb)){
+		$dbFilename = $andreiDb;
+	} elseif  (file_exists($up . $aronDb)){
+		$dbFilename = $aronDb;
 	}
 }
 
-function db_connect(){
-	global $db, $db_filename;
+function dbConnect(){
+	global $db, $dbFilename;
 	$up = dirname(__FILE__) . '/../';
-	if ($db = new PDO('sqlite:' . $up . $db_filename)) {
-		logmsg('DB', 'Db opened ok');
+	if ($db = new PDO('sqlite:' . $up . $dbFilename)) {
+		logMsg('DB', 'Db opened ok');
 	} else {
-		logmsg('ERROR', 'Db cannot be opened');
+		logMsg('ERROR', 'Db cannot be opened');
 		die();
 	}
 }
