@@ -1,12 +1,15 @@
-parse_contacts
+getContacts
   * extract name, primaryEmail
 
-parse_messages
+getContactsFromMessages
   * extract c4, c5, c6, c7
   * regexp into name and email
   * count to, from, cc, bcc
 
-match_contacts_matrix
+compareTwoContacts
+  *
+
+matchContacts
   * ??
 
 convert_utf8
