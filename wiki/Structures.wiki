@@ -1,0 +1,12 @@
+= Contacts Matrix =
+
+Key:
+* primary email
+Attr:
+* secondary emails
+* name
+* secondary names
+* count to
+* count from
+* count cc
+* count bcc
