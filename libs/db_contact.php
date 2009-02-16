@@ -1,5 +1,6 @@
 <?php
 
+// returns a multidimensional array with contacts from Contacts table
 function getContacts()
 {
 	global $db;
@@ -7,14 +8,75 @@ function getContacts()
 	//Generate query
 	$all = $db->query('SELECT * FROM Contacts');
 	
+	//Get all contacts
 	while ($alls = $all->fetch(PDO::FETCH_ASSOC))
 	{
-		//echo($alls['PrimaryEmail']);
+		/* Generate multidimensional array */
+		
+		//Necessary?
+		$contacts[$alls['PrimaryEmail']]['SecondaryEmail'] = '';
+		
+		$contacts[$alls['PrimaryEmail']]['PrimaryName'] = $alls['Name'];
+		
+		//Necessary?
+		$contacts[$alls['PrimaryEmail']]['SecondaryNames'] = '';
+		
+		//Necessary?
+		$contacts[$alls['PrimaryEmail']]['CountTo'] = 0;
+		$contacts[$alls['PrimaryEmail']]['CountFrom'] = 0;
+		$contacts[$alls['PrimaryEmail']]['CountCC'] = 0;
+		$contacts[$alls['PrimaryEmail']]['CountBCC'] = 0;
+		$contacts[$alls['PrimaryEmail']]['CountTotal'] = 0;
 	}
+	
+	return $contacts;
 }
 
-function getContactsFromMessages(){
-	return;
+// returns a multidimensional array with contacts from MessagesFT_content table
+// takes an optional multidimensional array
+function getContactsFromMessages($contacts = '')
+{
+	global $db;
+	
+	//Generate query
+	$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content');
+	
+	//Get all messages
+	while ($alls = $all->fetch(PDO::FETCH_ASSOC))
+	{
+		// TODO: Need to parse address part
+		$address = $alls['c4FromAddress'];
+		
+		//If e-mail exists
+		if (array_key_exists($address, $contacts))
+		{
+			//Increment count
+			$contacts[$address]['CountFrom'] += 1;
+			
+			//Name part?
+		}
+		else //If not, add e-mail to array
+		{
+			//Necessary?
+			$contacts[$address]['SecondaryEmail'] = '';
+		
+			$contacts[$address]['PrimaryName'] = $alls['Name'];
+			
+			//Necessary?
+			$contacts[$address]['SecondaryNames'] = '';
+			
+			//Necessary?
+			$contacts[$address]['CountTo'] = 0;
+			$contacts[$address]['CountFrom'] = 1;
+			$contacts[$address]['CountCC'] = 0;
+			$contacts[$address]['CountBCC'] = 0;
+			$contacts[$address]['CountTotal'] = 0;
+		}
+		
+		//TODO: Do similar for the remaining address fields, in loop if possible 
+	}
+	
+	return $contacts;
 }
 
 // returns a float from 0 to 100, by applying a match-compare formula check
