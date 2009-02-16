@@ -73,7 +73,7 @@ function getContactsFromMessages($contacts = '')
 			$contacts[$address]['CountTotal'] = 0;
 		}
 		
-		//TODO: Do similar for the remaining address fields, in loop if possible 
+		//TODO: Do similarly for the remaining address fields, in loop if possible 
 	}
 	
 	return $contacts;
