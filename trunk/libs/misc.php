@@ -39,13 +39,15 @@ function compareMetaphone($v1, $v2){
 	return $p;
 }
 
-function compareComplex($v1, $v2){	
+function compareComplex($v1, $v2){
+	global $weightLevenshtein, $weightMetaphone, $weightSoundex;
+	if (!strlen($v1)) echo "<br>".$v1." - ".$v2;
 	$l = 100-levenshtein($v1, $v2)/strlen($v1)*100;
 	$m = compareMetaphone($v1, $v2);
 	$s = compareSoundex($v1, $v2);
 	
 	#echo $v1." - ".$v2. " - $l - $m - $s - " . ($m*2/3 + $l*2/3*1/3 + $s*1/3*1/3) . "<br>";
-	return ($m*2/3 + $l*2/3*1/3 + $s*1/3*1/3);
+	return ($m*$weightMetaphone + $l*$weightLevenshtein + $s*$weightSoundex);
 }
 
 function compareComplexMulti($a1, $a2){
@@ -163,26 +165,5 @@ function print_a( $TheArray )
 
 function noDiacritics($text) {
 	return iconv('UTF-8', 'US-ASCII//TRANSLIT', $text);
-}
-
-function array_remove_empty($arr){
-    $narr = array();
-    while(list($key, $val) = each($arr)){
-        if (is_array($val)){
-            $val = array_remove_empty($val);
-            // does the result array contain anything?
-            if (count($val)!=0){
-                // yes :-)
-                $narr[$key] = $val;
-            }
-        }
-        else {
-            if (trim($val) != ""){
-                $narr[$key] = $val;
-            }
-        }
-    }
-    unset($arr);
-    return $narr;
 }
 ?>

@@ -11,10 +11,16 @@ $andreiDb = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
 $aronDb = '../db/aron.henriksson@gmail.com-GoogleMail#database[1]';
 dbChoose();
 
-#$logEcho = true;
-#$logEcho = false;
+$thresholdUsernameSimilarity = 90;
+$thresholdNameSimilarity = 70;
 
-$logEcho = array('CONTACTS_MATCH');
+$weightMetaphone = 2/3;
+$weightLevenshtein = 2/3*1/3;
+$weightSoundex = 1/3*1/3;
+
+#$logEcho = true;
+$logEcho = false;
+#$logEcho = array('CONTACTS_MATCH');
 $logFilename = './logs/' . array_shift(explode('@', basename($dbFilename))) . '_' . date('YmdHis') . '.txt';
 $log = fopen($logFilename, 'w');
 if ($log) {logMsg('FILE', 'Log opened for writing');}

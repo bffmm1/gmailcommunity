@@ -6,11 +6,14 @@ function getContacts()
 	global $db, $contacts;
 	
 	//Generate query
-	$all = $db->query('SELECT * FROM Contacts LIMIT 0,100');
+	$all = $db->query('SELECT * FROM Contacts');
 	
 	//Get all contacts
 	while ($alls = $all->fetch(PDO::FETCH_ASSOC))
 	{
+		// some contacts have no email
+		if (!$alls['PrimaryEmail']) continue;
+		
 		$alls['PrimaryEmail'] = strtolower($alls['PrimaryEmail']);
 		/* Generate multidimensional array */
 		
@@ -37,12 +40,12 @@ function getContacts()
 
 // returns a multidimensional array with contacts from MessagesFT_content table
 // takes an optional multidimensional array
-function getContactsFromMessages($contacts = '')
+function getContactsFromMessages()
 {
 	global $db, $contacts;
 	
 	//Generate query
-	$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content LIMIT 0,100');
+	$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content');
 	
 	//Get all messages
 	while ($alls = $all->fetch(PDO::FETCH_ASSOC))
@@ -56,6 +59,7 @@ function getContactsFromMessages($contacts = '')
 			
 			foreach($addresses as $address){
 				
+				$fullname = '';
 				$address = trim($address);
 				if (!$address) continue;
 				
@@ -70,6 +74,9 @@ function getContactsFromMessages($contacts = '')
 				
 				$address = strtolower($address);
 				
+				// safety
+				if (!$address) continue;
+				
 				//If e-mail exists
 				if (isset($contacts[$address]))
 				{
@@ -81,7 +88,9 @@ function getContactsFromMessages($contacts = '')
 					
 					if ($fullname) {
 						if ($contacts[$address]['name']){
-							$contacts[$address]['secondaryNames'][] = $fullname;
+							if ($fullname != $contacts[$address]['name'] && !in_array($fullname, $contacts[$address]['secondaryNames'])) {
+								$contacts[$address]['secondaryNames'][] = $fullname;
+							}
 						}else{
 							$contacts[$address]['name'] = $fullname;
 						}
@@ -116,45 +125,48 @@ function getContactsFromMessages($contacts = '')
 	}
 }
 
-	function clearName(&$name){
+	function cleanName(&$name){
 		$name = noPunctuation($name);
 		$name = noDiacritics($name);
 		$name = strtolower($name);
+		$name = trim($name);
 	}
 	
 // returns a float from 0 to 100, by applying a match-compare formula check
 function compareTwoContacts($c1, $c2){
+	global $thresholdUsernameSimilarity, $thresholdNameSimilarity;
 	#logMsg('CONTACTS_MATCH', "Comparing " . $c1['email'] . " with " . $c2['email']);
 
-	// merge primary name with secondary
+	// merge primary name with secondary names
 	$c1Names = $c1['secondaryNames'];
 	$c2Names = $c2['secondaryNames'];
 	if ($c1['name']) $c1Names[] = $c1['name'];
 	if ($c2['name']) $c2Names[] = $c2['name'];
 	
+	// if we have names
 	if (count($c1Names) && count($c2Names)){
 		// clean names
-		array_walk($c1Names, 'clearName');
-		array_walk($c2Names, 'clearName');
+		array_walk($c1Names, 'cleanName');
+		array_walk($c2Names, 'cleanName');
 	
 		// check for exact items
 		$commonNames = array_intersect($c1Names, $c2Names);
 	}
 	
 	$c1Username = $c1['usernames'][0];
-	clearName($c1Username);
+	cleanName($c1Username);
 	
 	$c2Username = $c2['usernames'][0];
-	clearName($c2Username);
+	cleanName($c2Username);
 	
 	// check similarity
 	if (!empty($commonNames)){
 		// full names match
-		return 100;
-	}elseif (($usernameSimilarity = compareComplex($c1Username, $c2Username)) && $usernameSimilarity > 90){
+		return 1;
+	}elseif ($c1Username && $c2Username && ($usernameSimilarity = compareComplex($c1Username, $c2Username)) && $usernameSimilarity > $thresholdUsernameSimilarity){
 		// very high username similarity
 		logMsg('CONTACTS_MATCH', "Username similarity between '".$c1Username."' and '".$c2Username."' is $usernameSimilarity");
-		return $usernameSimilarity;
+		return 1;
 	}elseif (count($c1Names) && count(c2Names)){
 		// check names similarity
 		$nameSimilarity = 0;
@@ -172,14 +184,41 @@ function compareTwoContacts($c1, $c2){
 				}
 			}
 		}
-		return $nameSimilarity;
+		return ($nameSimilarity > $thresholdUsernameSimilarity)?1:0;
 	}else{
 		return 0;
 	}
 }
 
+function mergeContacts($a){
+	global $contacts;
+	$indexPrimary = $a[0];
+	$countTotal = 0;
+	foreach($a as $key){
+		if ($contacts[$key]['countTotal'] > $countTotal){
+			$indexPrimary = $key;
+			$countTotal = $contacts[$key]['countTotal'];
+		}
+	}
+	foreach($a as $key){
+		if ($key != $indexPrimary){
+			# merge contacts[$key] into contacts[indexPrimary]
+			$contacts[$indexPrimary]['secondaryEmails'] = array_unique(array_merge($contacts[$indexPrimary]['secondaryEmails'],  $contacts[$key]['secondaryEmails']));
+			$contacts[$indexPrimary]['secondaryNames'] = array_unique(array_merge($contacts[$indexPrimary]['secondaryNames'],  $contacts[$key]['secondaryNames']));
+			$contacts[$indexPrimary]['usernames'] = array_unique(array_merge($contacts[$indexPrimary]['usernames'],  $contacts[$key]['usernames']));
+			$contacts[$indexPrimary]['countTo'] += $contacts[$key]['countTo'];
+			$contacts[$indexPrimary]['countFrom'] += $contacts[$key]['countFrom'];
+			$contacts[$indexPrimary]['countCc'] += $contacts[$key]['countCc'];
+			$contacts[$indexPrimary]['countBcc'] += $contacts[$key]['countBcc'];
+			$contacts[$indexPrimary]['countTotal'] += $contacts[$key]['countTotal'];
+			unset($contacts[$key]);
+		}
+	}
+}
+
 function matchContacts(){
 	global $contacts;
+	print_a($contacts); die();
 	$contactsWeight = array();
 	$contactsCopy = $contacts;
 	while ($contact1 = array_shift($contactsCopy)){
@@ -190,6 +229,20 @@ function matchContacts(){
 	}
 	
 	// match based on matrix
+	foreach ($contactsWeight as $key1 => $a){
+		$toMerge = array();
+		foreach ($a as $key2 => $score) {
+			if ($score) {
+				$toMerge[] = $key2;
+			}
+		}
+		if (count($toMerge)){
+			$toMerge[] = $key1;
+			mergeContacts($toMerge);
+		}
+	}
+	
+	print_a($contacts);
 }
 
 ?>

@@ -2,6 +2,10 @@
 
 require('libs/misc.php');
 
+$weightMetaphone = 2/3;
+$weightLevenshtein = 2/3*1/3;
+$weightSoundex = 1/3*1/3;
+
 $matrix = array();
 
 if ($_GET['w1'] && $_GET['w2']) {
