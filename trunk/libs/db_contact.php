@@ -60,7 +60,18 @@ function getContactsFromMessages()
 			$type = str_replace('Addresses', '', $type);
 			$type = str_replace('Address', '', $type);
 		
-			$addresses = explode(',', $addresses);
+			//$addresses = explode(',', $addresses);
+			// fullname might have comma, so we need a regexp
+			$addresses .= ',';
+			preg_match_all("/(?:(?:[,;\s]*)([^@]+@[^@]+)(?=,))/", $addresses, $matches);
+			array_shift($matches);
+/*			$i = 0;
+			echo "<br>".htmlentities($addresses);
+			foreach($matches[1] as $m){
+				echo "<br>$i - ".htmlentities($m);
+				$i++;
+			}*/
+			$addresses = $matches[0];
 			
 			foreach($addresses as $address){
 				
