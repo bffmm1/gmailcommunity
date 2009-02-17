@@ -1,5 +1,7 @@
 <?php
 
+require('db_contact.php');
+
 function dbChoose(){
 	global $andreiDb, $aronDb, $dbFilename;
 	$up = dirname(__FILE__) . '/../';

@@ -3,8 +3,8 @@
 function logMsg($type, $msg){
 	global $log, $logEcho;
 	$output = "$type - $msg";
-	fwrite($log, $output);
-	if ($logEcho){
+	fwrite($log, "\n$output");
+	if (($logEcho === true) || (is_array($logEcho) && in_array($type, $logEcho))){
 		echo "<div class=\"log\">$output</div>";
 	}
 }
@@ -164,5 +164,4 @@ function print_a( $TheArray )
 function noDiacritics($text) {
 	return iconv('UTF-8', 'US-ASCII//TRANSLIT', $text);
 }
-
 ?>
