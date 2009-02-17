@@ -46,10 +46,15 @@ function getContactsFromMessages()
 	
 	//Generate query
 	$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content');
+	$all_flags = $db->query('SELECT IsInbox, IsSent FROM Messages');
 	
 	//Get all messages
 	while ($alls = $all->fetch(PDO::FETCH_ASSOC))
 	{
+		$alls_flags = $all_flags->fetch(PDO::FETCH_ASSOC);
+		
+		if (!$alls_flags['IsInbox'] && !$alls_flags['IsSent']) continue;
+		
 		foreach ($alls as $type => $addresses){
 			$type = substr($type, 2);
 			$type = str_replace('Addresses', '', $type);
