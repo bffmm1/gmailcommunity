@@ -129,8 +129,8 @@ function compareTwoContacts($c1, $c2){
 	// merge primary name with secondary
 	$c1Names = $c1['secondaryNames'];
 	$c2Names = $c2['secondaryNames'];
-	$c1Names[] = $c1['name'];
-	$c2Names[] = $c2['name'];
+	if ($c1['name']) $c1Names[] = $c1['name'];
+	if ($c2['name']) $c2Names[] = $c2['name'];
 	
 	if (count($c1Names) && count($c2Names)){
 		// clean names
@@ -160,12 +160,12 @@ function compareTwoContacts($c1, $c2){
 		$nameSimilarity = 0;
 		
 		foreach($c1Names as $c1Name){
-			$c1NamesSplit = explode(' ', $c1Names);
+			$c1NamesSplit = explode(' ', $c1Name);
 			$nameSimilarity = 0;
 			foreach($c2Names as $c2Name){
-				$c2NamesSplit = explode(' ', $c2Names);
+				$c2NamesSplit = explode(' ', $c2Name);
 				$similarity = compareComplexMulti($c1NamesSplit, $c2NamesSplit);
-				logMsg('CONTACTS_MATCH', "Name similarity between '$name' and '$comparisonName' is $similarity");
+				logMsg('CONTACTS_MATCH', "Name similarity between '".$c1Name."' and '".$c2Name."' is $similarity");
 				
 				if ($similarity > $nameSimilarity){
 					$nameSimilarity = $similarity;
