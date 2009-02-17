@@ -53,12 +53,14 @@ function getContactsFromMessages($contacts = '')
 			$type = str_replace('Address', '', $type);
 		
 			$addresses = explode(',', $addresses);
+			
 			foreach($addresses as $address){
+				
 				$address = trim($address);
 				if (!$address) continue;
 				
 				logMsg('CONTACTS', 'Parsing '.htmlentities($address, ENT_COMPAT, 'UTF-8'));
-				// TODO: REGEXP split into $fullname (optional) and $address
+				
 				if (preg_match("/^(.+) <(.+)>$/", $address, $matches)){
 					array_shift($matches);
 					logMsg('CONTACTS', 'Matched: ' . implode(' -- ', $matches));
@@ -69,33 +71,32 @@ function getContactsFromMessages($contacts = '')
 				$address = strtolower($address);
 				
 				//If e-mail exists
-				//if (array_key_exists($address, $contacts))
 				if (isset($contacts[$address]))
 				{
 					logMsg('DB', 'Updating '.$address.' inside the matrix');
+					
 					//Increment count
 					$contacts[$address]['count'.$type] += 1;
 					$contacts[$address]['countTotal'] += 1;
 					
-					//Name part?
+					if ($fullname) {
+						if ($contacts[$address]['name']){
+							$contacts[$address]['secondaryNames'][] = $fullname;
+						}else{
+							$contacts[$address]['name'] = $fullname;
+						}
+					}
 				}
 				else //If not, add e-mail to array
 				{
 					logMsg('CONTACTS', 'Adding '.$address.' to the matrix');
 					
 					$contacts[$address]['email'] = $address;
-		
 					$contacts[$address]['usernames'] = array(array_shift(split('@', $address)));
-					
-					//Necessary?
 					$contacts[$address]['secondaryEmails'] = array();
-				
 					$contacts[$address]['name'] = $alls['Name'];
-					
-					//Necessary?
 					$contacts[$address]['secondaryNames'] = array();
 					
-					//Necessary?
 					$contacts[$address]['countTo'] = 0;
 					$contacts[$address]['countFrom'] = 0;
 					$contacts[$address]['countCc'] = 0;
