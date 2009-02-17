@@ -76,8 +76,8 @@ function getContactsFromMessages($contacts = '')
 					//Necessary?
 					$contacts[$address]['countTo'] = 0;
 					$contacts[$address]['countFrom'] = 0;
-					$contacts[$address]['countCC'] = 0;
-					$contacts[$address]['countBCC'] = 0;
+					$contacts[$address]['countCc'] = 0;
+					$contacts[$address]['countBcc'] = 0;
 					$contacts[$address]['countTotal'] = 0;
 					
 					$contacts[$address]['count'.$type] = 1;
