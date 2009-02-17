@@ -19,7 +19,6 @@ $weightLevenshtein = 2/3*1/3;
 $weightSoundex = 1/3*1/3;
 
 #$logEcho = true;
-$logEcho = false;
 #$logEcho = array('CONTACTS_MATCH');
 $logFilename = './logs/' . array_shift(explode('@', basename($dbFilename))) . '_' . date('YmdHis') . '.txt';
 $log = fopen($logFilename, 'w');

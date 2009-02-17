@@ -85,6 +85,7 @@ function getContactsFromMessages()
 					array_shift($matches);
 					logMsg('CONTACTS', 'Matched: ' . implode(' -- ', $matches));
 					$fullname = $matches[0];
+					$fullname = trim($fullname, " \"\\");
 					$address = $matches[1];
 				}
 				
@@ -183,14 +184,16 @@ function compareTwoContacts($c1, $c2){
 		// very high username similarity
 		logMsg('CONTACTS_MATCH', "Username similarity between '".$c1Username."' and '".$c2Username."' is $usernameSimilarity");
 		return 1;
-	}elseif (count($c1Names) && count(c2Names)){
+	}elseif (count($c1Names) && count($c2Names)){
 		// check names similarity
 		$nameSimilarity = 0;
 		
 		foreach($c1Names as $c1Name){
+			if (!$c1Name) continue;
 			$c1NamesSplit = explode(' ', $c1Name);
 			$nameSimilarity = 0;
 			foreach($c2Names as $c2Name){
+				if (!$c2Name) continue;
 				$c2NamesSplit = explode(' ', $c2Name);
 				$similarity = compareComplexMulti($c1NamesSplit, $c2NamesSplit);
 				logMsg('CONTACTS_MATCH', "Name similarity between '".$c1Name."' and '".$c2Name."' is $similarity");
@@ -234,7 +237,6 @@ function mergeContacts($a){
 
 function matchContacts(){
 	global $contacts;
-	print_a($contacts); die();
 	$contactsWeight = array();
 	$contactsCopy = $contacts;
 	while ($contact1 = array_shift($contactsCopy)){
@@ -257,7 +259,7 @@ function matchContacts(){
 			mergeContacts($toMerge);
 		}
 	}
-	
+	echo '123';
 	print_a($contacts);
 }
 
