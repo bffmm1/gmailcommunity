@@ -6,12 +6,16 @@
     </head>
     <body>
         <?php
-        require ('config.php');
+        require_once ('config.php');
         
         getContacts();
         getContactsFromMessages();
+		
+		ksort($contacts);
         
         matchContacts();
+		
+		pruneContacts();
         ?>
     </body>
 </html>
