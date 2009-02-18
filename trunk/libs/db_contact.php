@@ -142,6 +142,7 @@ function getContactsFromMessages() {
 	}
 }
 
+// removes by reference the punctuation, diacritics and converts to lowercase
 function cleanName( & $name) {
 	$name = noPunctuation($name);
 	$name = noDiacritics($name);
