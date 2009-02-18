@@ -1,6 +1,7 @@
 <?php
 
-require ('db_contact.php');
+require_once ('db_contact.php');
+require_once ('db_message.php');
 
 function dbChoose() {
 	global $andreiDb, $aronDb, $dbFilename;

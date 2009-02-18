@@ -5,9 +5,18 @@ function logMsg($type, $msg) {
 	$output = "$type - $msg";
 	fwrite($log, "\n$output");
 	fflush($log);
-	if (($logEcho === true) || (is_array($logEcho) && in_array($type, $logEcho))) {
-		echo "<div class=\"log\">$output</div>";
+	if (($type == 'USER') || ($logEcho === true) || (is_array($logEcho) && in_array($type, $logEcho))) {
+		echo "<div class=\"log\">".htmlentities($output, ENT_COMPAT, "UTF-8")."</div>";
+		flush();
 	}
+}
+
+function dumpVar($varName, $var) {
+	global $filenameId;
+	$filename = './results/'.$filenameId.'_'.$varName.'.txt';
+	$f = fopen($filename, 'w');
+	fwrite($f, print_r($var, true));
+	fclose($f);
 }
 
 function shutdown() {
@@ -15,9 +24,6 @@ function shutdown() {
 	@fclose($log);
 }
 
-/**
- * Strip punctuation from text.
- */
 function noPunctuation($text) {
 	$urlbrackets = '\[\]\(\)';
 	$urlspacebefore = ':;\'_\*%@&?!'.$urlbrackets;
@@ -62,7 +68,6 @@ function noPunctuation($text) {
 		$text
 	);
 }
-
 
 function print_a($TheArray) { // Note: the function is recursive
 	echo "<table border=0 cellspacing=1 cellpadding=1>\n";
