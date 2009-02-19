@@ -8,16 +8,16 @@
         <?php
         require_once ('config.php');
         
-        //getContacts();
-        //getContactsFromMessages();
+        getContacts();
+        getContactsFromMessages();
 		
-		//ksort($contacts);
+		ksort($contacts);
         
-        //matchContacts();
+        matchContacts();
 		
-		//pruneContacts();
+		pruneContacts();
 		
-        global $allAddresses;
+        /*global $allAddresses;
         global $allAddressesReference;
 		
         $allAddresses['aron.henriksson@gmail.com'] = "dfs";
@@ -29,7 +29,7 @@
         $allAddressesReference['neculau@kth.se'] = 'andrei.neculau@gmail.com';
         $allAddressesReference['aron.henriksson@gmail.com'] = 'aron.henriksson@gmail.com';
         $allAddressesReference['aronhen@kth.se'] = 'aron.henriksson@gmail.com';
-		
+		*/
 		getMessages();
         ?>
     </body>

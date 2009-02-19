@@ -18,11 +18,10 @@ function automaticUsername($username) {
 
 // returns a multidimensional array with contacts from Contacts table
 function getContacts() {
-	global $db, $contacts;
+	global $db, $contacts, $limitRecords;
 
 	//Generate query
-	//$all = $db->query('SELECT * FROM Contacts LIMIT 0,200');
-	$all = $db->query('SELECT * FROM Contacts');
+	$all = $db->query('SELECT * FROM Contacts'.$limitRecords);
 
 	logMsg('USER', 'Fetching Contacts...');
 
@@ -69,13 +68,12 @@ function getContacts() {
 // returns a multidimensional array with contacts from MessagesFT_content table
 // takes an optional multidimensional array
 function getContactsFromMessages() {
-	global $db, $contacts;
+	global $db, $contacts, $limitRecords;
 
 	logMsg('USER', 'Fetching Contacts by parsing available Messages...');
 
 	//Generate query
-	//$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content LIMIT 0,100');
-	$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content');
+	$all = $db->query('SELECT c4FromAddress, c5ToAddresses, c6CcAddresses, c7BccAddresses FROM MessagesFT_content'.$limitRecords);
 	$all_flags = $db->query('SELECT IsInbox, IsSent FROM Messages');
 
 	//Get all messages
@@ -282,8 +280,10 @@ function matchContacts() {
 	while ($contact1 = array_shift($contactsCopy)) {
 		$key1 = $contact1['email'];
 		logMsg('DEBUG', "Matching ".$contact1['email']."...");
+		
 		echo ' .';
 		flush();
+		
 		foreach ($contactsCopy as $key2=>$contact2) {
 			$contactsWeight[$key1][$key2] = compareTwoContacts($contact1, $contact2);
 			logMsg('DEBUG', "Comparing contacts ".$contact1['email']." and ".$contact2['email']." => ".$contactsWeight[$key1][$key2]);
@@ -318,23 +318,38 @@ function matchContacts() {
 }
 
 function pruneContacts() {
-	global $contacts;
+	global $contacts, $allAddresses, $allAddressesReference;
 	$count = array ();
 	foreach ($contacts as $contact) {
-		$count[] = $contact['countTotal'];
+		if ($contact['countTotal']){
+			$count[] = $contact['countTotal'];
+		}
 	}
+	dumpVar('5_contacts_countTotal', $count);
 	$mean = stats_harmonic_mean($count);
-	logMsg('USER', 'Mean set to '.$mean.' (messages count) and pruning contacts...');
+	logMsg('USER', 'Mean set to '.$mean.'*2 (messages count) and pruning contacts...');
 
+	$allAddresses = array();
+	$allAddressesReference = array();
+	
 	// delete all contacts that do not reach a certain number of messages
 	foreach ($contacts as $key=>$contact) {
-		if ($contact['countTotal'] >= $mean) {
+		if ($contact['countTotal'] < $mean*2) {
 			logMsg('DEBUG', 'Pruning contact '.$key.' ('.$contact['countTotal'].')...');
 			unset ($contacts[$key]);
+		}else{
+			$allAddresses = array_merge($allAddresses, array($key));
+			$allAddresses = array_merge($allAddresses, $contacts[$key]['secondaryEmails']);
+			$allAddressesReference[$key] = $key;
+			foreach ($contacts[$key]['secondaryEmails'] as $key2){
+				$allAddressesReference[$key2] = $key;
+			}
 		}
 	}
 	logMsg('USER', 'Pruning done!');
-	dumpVar('5_contacts_pruned', $contacts);
+	dumpVar('6_contacts_pruned', $contacts);
+	
+	
 }
 
 ?>
