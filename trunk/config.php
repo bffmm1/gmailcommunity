@@ -3,6 +3,7 @@
 require_once ('libs/misc.php');
 require_once ('libs/compare.php');
 require_once ('libs/db.php');
+require_once ('libs/db_message.php');
 
 @apache_setenv('no-gzip', 1);
 @ini_set('zlib.output_compression', 0);
@@ -16,7 +17,7 @@ register_shutdown_function('shutdown');
 
 global $dbFilename, $db;
 $andreiDb = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
-$aronDb = '../db/aron.henriksson@gmail.com-GoogleMail#database[1]';
+$aronDb = '../db/aron.henriksson@gmail.com-GoogleMail#database';
 dbChoose();
 
 $thresholdUsernameSimilarity = 90;
