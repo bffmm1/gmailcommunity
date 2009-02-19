@@ -43,29 +43,29 @@ function noPunctuation($text) {
 	$nummodifiers = $numbersign.$percent.$prime;
 
 	return preg_replace(
-		array (
-			// Remove separator, control, formatting, surrogate,
-			// open/close quotes.
-			'/[\p{Z}\p{Cc}\p{Cf}\p{Cs}\p{Pi}\p{Pf}]/u',
-			// Remove other punctuation except special cases
-			'/\p{Po}(?<!['.$specialquotes.
-			$numseparators.$urlall.$nummodifiers.'])/u',
-			// Remove non-URL open/close brackets, except URL brackets.
-			'/[\p{Ps}\p{Pe}](?<!['.$urlbrackets.'])/u',
-			// Remove special quotes, dashes, connectors, number
-			// separators, and URL characters followed by a space
-			'/['.$specialquotes.$numseparators.$urlspaceafter.
-			'\p{Pd}\p{Pc}]+((?= )|$)/u',
-			// Remove special quotes, connectors, and URL characters
-			// preceded by a space
-			'/((?<= )|^)['.$specialquotes.$urlspacebefore.'\p{Pc}]+/u',
-			// Remove dashes preceded by a space, but not followed by a number
-			'/((?<= )|^)\p{Pd}+(?![\p{N}\p{Sc}])/u',
-			// Remove consecutive spaces
-			'/ +/'
-		),
-		' ',
-		$text
+	array (
+	// Remove separator, control, formatting, surrogate,
+	// open/close quotes.
+	'/[\p{Z}\p{Cc}\p{Cf}\p{Cs}\p{Pi}\p{Pf}]/u',
+	// Remove other punctuation except special cases
+	'/\p{Po}(?<!['.$specialquotes.
+	$numseparators.$urlall.$nummodifiers.'])/u',
+	// Remove non-URL open/close brackets, except URL brackets.
+	'/[\p{Ps}\p{Pe}](?<!['.$urlbrackets.'])/u',
+	// Remove special quotes, dashes, connectors, number
+	// separators, and URL characters followed by a space
+	'/['.$specialquotes.$numseparators.$urlspaceafter.
+	'\p{Pd}\p{Pc}]+((?= )|$)/u',
+	// Remove special quotes, connectors, and URL characters
+	// preceded by a space
+	'/((?<= )|^)['.$specialquotes.$urlspacebefore.'\p{Pc}]+/u',
+	// Remove dashes preceded by a space, but not followed by a number
+	'/((?<= )|^)\p{Pd}+(?![\p{N}\p{Sc}])/u',
+	// Remove consecutive spaces
+	'/ +/'
+	),
+	' ',
+	$text
 	);
 }
 
@@ -95,5 +95,34 @@ function print_a($TheArray) { // Note: the function is recursive
 
 function noDiacritics($text) {
 	return iconv('UTF-8', 'US-ASCII//TRANSLIT', $text);
+}
+
+function rmdirr($dirname)
+{
+	// Sanity check
+	if (!file_exists($dirname)) {
+		return false;
+	}
+
+	// Simple delete for a file
+	if (is_file($dirname)) {
+		return unlink($dirname);
+	}
+
+	// Loop through the folder
+	$dir = dir($dirname);
+	while (false !== $entry = $dir->read()) {
+		// Skip pointers
+		if ($entry == '.' || $entry == '..') {
+			continue ;
+		}
+
+		// Recurse
+		rmdirr( "$dirname/$entry");
+	}
+
+	// Clean up
+	$dir->close();
+	return rmdir($dirname);
 }
 ?>

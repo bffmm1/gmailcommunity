@@ -5,6 +5,9 @@ require_once ('libs/compare.php');
 require_once ('libs/db.php');
 require_once ('libs/db_message.php');
 
+@rmdirr('./content');
+@mkdir('./content');
+
 @apache_setenv('no-gzip', 1);
 @ini_set('zlib.output_compression', 0);
 @ini_set('implicit_flush', 1);
@@ -29,6 +32,7 @@ $weightSoundex = 1/3*1/3;
 
 #$logEcho = true;
 #$logEcho = array('USER');
+#$limitRecords = " LIMIT 0,200";
 $filenameId = array_shift(explode('@', basename($dbFilename))).'_'.date('YmdHis');
 $logFilename = './logs/'.$filenameId.'.txt';
 $log = fopen($logFilename, 'w');
