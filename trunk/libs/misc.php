@@ -179,4 +179,12 @@ function sanitizeFilename($name) {
   return $name;
 
 }
+
+function array_trim($var) {
+    if (is_array($var))
+        return array_map("array_trim", $var);
+    if (is_string($var))
+        return trim($var);
+    return $var;
+}
 ?>

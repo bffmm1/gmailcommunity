@@ -5,6 +5,9 @@
         <title>Gmail Community Discovery</title>
     </head>
     <body>
+        <img src="logo.jpg" style="float:left; margin-right:50px"><h1>Gmail Community Discovery</h1>
+		<h3>Aron HENRIKSSON &amp; Andrei NECULAU<br></>Web-Mining project &middot; KTH, Sweden &middot; February 2009 </h3>
+        <hr style="clear:both">
         <?php
 		require_once ('libs/misc.php');
 
@@ -21,14 +24,17 @@
 		logMsg('MEMORY', 'Current allocated memory (after Contacts): '. memory_get_usage());
         getContactsFromMessages();
 		logMsg('MEMORY', 'Current allocated memory (after Contacts from Messages): '. memory_get_usage());
+		dumpPhpVar('contactsCount', count($contacts));
 		
 		ksort($contacts);
         
         matchContacts();
 		logMsg('MEMORY', 'Current allocated memory (after Matching Contacts): '. memory_get_usage());
+		dumpPhpVar('contactsCountMatched', count($contacts));
 		
 		pruneContacts();
 		logMsg('MEMORY', 'Current allocated memory (after Pruning Contacts): '. memory_get_usage());
+		dumpPhpVar('contactsCountPruned', count($contacts));
 		
         /*global $allAddresses;
         global $allAddressesReference;
@@ -64,5 +70,7 @@
 		dumpPhpVar('contactsRelate', $contactsRelate);
 		logMsg('MEMORY', 'Current allocated memory (after Relating Contacts): '. memory_get_usage());
         ?>
+		<hr>
+		<big><a href="display.php">Now go play with the results!!!</a></big>
     </body>
 </html>

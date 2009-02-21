@@ -172,6 +172,9 @@ function getMessages()
 				}else {
 					continue;
 				}
+				if ($email1 == $email2) {
+					continue;
+				}
 				logMsg('DEBUG', 'Weighing relationship based on exchanged messages (To/Cc/From) for '.$email1.' and '.$email2.'.');
 				$contactsRelate[$email1][$email2]['count'] += 2/count($dumpAddress['To']);
 				$contactsRelate[$email2][$email1]['count'] += 2/count($dumpAddress['To']);
@@ -187,6 +190,9 @@ function getMessages()
 			for ($j=$i+1; $j<count($tmp); $j++){
 				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])){
 				}else {
+					continue;
+				}
+				if ($email1 == $email2) {
 					continue;
 				}
 				logMsg('DEBUG', 'Weighing relationship based on exchanged messages (Bcc/From) for '.$email1.' and '.$email2.'.');
@@ -243,15 +249,15 @@ function topWords(){
 			$cmd = 'cat '.$filename.' | tr "A-Z" "a-z" | tr -c "[:alpha:]" " " | tr " " "\n" | sort | uniq -c | sort | grep -v -w -f '.$up.'/stopwords/english.txt'.$extraStopwords.' | grep -E [a-z]{3,} | tr -d " *[:digit:]*\t" | tail -n '.$thresholdWords.' > '.$filenameWords;
 			logMsg('DEBUG', "Running CMD: $cmd");
 			shell_exec($cmd);
-			$contacts[$email]['words'] = file($filenameWords);
+			$contacts[$email]['words'] = array_reverse(array_trim(file($filenameWords)));
 			
 			if ($language == 'english' || $language == 'swedish'){
 				$languageShort = substr($language, 0, 2);
 				$cmd = $up.'/cstlemma/bin/vc2008/cstlemma.exe -e1 -L -f '.$up.'/cstlemma/flexrules_'.$languageShort.' -t- -c"$B" -B"$w\n" < '.$filenameWords.' > '.$filenameWordsStem;
 				logMsg('DEBUG', "Running CMD: $cmd");
 				shell_exec($cmd);
-				$contacts[$email]['wordsStem'] = file($filenameWordsStem);
-				array_shift($contacts[$email]['wordsStem']);
+				$contacts[$email]['wordsStem'] = array_reverse(array_trim(file($filenameWordsStem)));
+				array_pop($contacts[$email]['wordsStem']);
 			}
 		}
 	}
