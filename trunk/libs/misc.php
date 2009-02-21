@@ -12,10 +12,18 @@ function logMsg($type, $msg) {
 }
 
 function dumpVar($varName, $var) {
-	global $filenameId;
-	$filename = './results/'.$filenameId.'_'.$varName.'.txt';
+	global $filenameId, $up;
+	$filename = $up.'/logs/'.$filenameId.'_'.$varName.'.txt';
 	$f = fopen($filename, 'w');
 	fwrite($f, print_r($var, true));
+	fclose($f);
+}
+
+function dumpPhpVar($varName, $var) {
+	global $filenameId, $up;
+	$filename = $up.'/results/'.$varName.'.txt';
+	$f = fopen($filename, 'w');
+	fwrite($f, var_export($var, true));
 	fclose($f);
 }
 
@@ -124,5 +132,51 @@ function rmdirr($dirname)
 	// Clean up
 	$dir->close();
 	return rmdir($dirname);
+}
+
+/**
+* Returns a filename based on the $name paramater that has been
+* striped of special characters, it's spaces changed to underscores,
+* and shortened to 50 characters... but keeping it's extension
+* PD: Updated to keep extensions, based on code by timdw at
+* <a href="http://forums.codecharge.com/posts.php?post_id=75694
+" title="http://forums.codecharge.com/posts.php?post_id=75694
+" rel="nofollow">http://forums.codecharge.com/posts.php?post_id=75694
+</a> */
+function sanitizeFilename($name) {
+  $limit = 100;
+  $special_chars = array ("#","$","%","^","&","*","!","~","‘","\"","’","'","=","?","/","[","]","(",")","|","<",">",";","\\",",",".");
+  $name = preg_replace("/^[.]*/","",$name); // remove leading dots
+  $name = preg_replace("/[.]*$/","",$name); // remove trailing dots
+  
+  $lastdotpos=strrpos($name, "."); // save last dot position
+  
+  $name = str_replace($special_chars, "", $name);  // remove special characters
+  
+  $name = str_replace(' ','_',$name); // replace spaces with _
+  
+  $afterdot = "";
+  if ($lastdotpos !== false) { // Split into name and extension, if any.
+    if ($lastdotpos < (strlen($name) - 1))
+        $afterdot = substr($name, $lastdotpos);
+    
+    $extensionlen = strlen($afterdot);
+    
+    if ($lastdotpos < ($limit - $extensionlen) )
+        $beforedot = substr($name, 0, $lastdotpos);
+    else
+        $beforedot = substr($name, 0, ($limit - $extensionlen));
+  }
+  else   // no extension
+   $beforedot = substr($name,0,$limit);
+
+  
+  if ($afterdot)
+    $name = $beforedot . "." . $afterdot;
+  else
+    $name = $beforedot;
+  
+  return $name;
+
 }
 ?>

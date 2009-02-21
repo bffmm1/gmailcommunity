@@ -11,7 +11,7 @@ function getMessages()
 	//$allAddresses - array of all e-mails available in $contacts after pruning
 	//$allAddressesReference['neculau@kth.se'] = 'andrei.neculau@gmail.com' where the latter is the primary email
 	//$db - reference to database connection
-	global $allAddresses, $allAddressesReference, $db, $limitRecords;
+	global $allAddresses, $allAddressesReference, $db, $limitRecords, $up, $contactsRelate;
 
 	//Generate log message
 	logMsg('USER', 'Fetching relevant messages and putting into files...');
@@ -25,6 +25,7 @@ function getMessages()
 	//Get all messages
 	while ($row = $all->fetch(PDO::FETCH_ASSOC))
 	{
+		$dumpAddress = array();
 		//Get flags
 		$alls_flags = $all_flags->fetch(PDO::FETCH_ASSOC);
 
@@ -35,7 +36,7 @@ function getMessages()
 		}
 
 		//Gauge
-		echo ' .';
+		echo ' <span>.</span>';
 		flush();
 
 		//Retrieve body of e-mail
@@ -92,18 +93,23 @@ function getMessages()
 
 				//Get primary e-mail of contact
 				$email = $allAddressesReference[$address];
+				
+				if ($type == 'Cc') {
+					$type = 'To';
+				}
+				$dumpAddress[$type][] = $email;
 
 				//Check if sender/recipient is 'interesting'
 				//if (isset($allAddresses[$email]))
 				//{
 				//The path of the file to open
-				$filename = 'content/'.str_replace('@', '_', $email).'.txt';
+				$filename = $up.'/content/'.sanitizeFilename($email).'.txt';
 
 				//Check if file exists
 				//$fileExists = file_exists($filename);
 
 				//Open the file for appending (will create if nonexistent)
-				$file = fopen(dirname(__FILE__).'/../'.$filename, 'a');
+				$file = fopen($filename, 'a');
 
 				//If file opens successfully
 				if ($file)
@@ -127,12 +133,16 @@ function getMessages()
 					//{
 					$body = "\n\n".$body;
 					//}
+					
+					//For romanian consistency
+					$body = str_replace('ș', 'ş', $body);
+					$body = str_replace('ț', 'ţ', $body);
 
 					//Append body to end of file
 					if (!fwrite($file, $body))
 					{
 						//Generate log message if nothing was written
-						logMsg("DEBUG", "Unable to write to: $filename");
+						logMsg("DEBUG", "Unable to write to: ". basename($filename));
 					}
 
 					//Flush the output buffer
@@ -144,21 +154,108 @@ function getMessages()
 				else
 				{
 					//Generate log message
-					logMsg('DEBUG', "Unable to open file: $filename");
+					logMsg('DEBUG', "Unable to open file: ". basename($filename));
 				}
 				//}
 			}
 		}
+		unset($body);
+		
+		// memory problems with the following two loops
+		for ($i=0; $i<count($dumpAddress['To']); $i++){
+			$tmp = $dumpAddress['To'];
+			if ($dumpAddress['From']) {
+				$tmp[] = $dumpAddress['From'][0];
+			}
+			for ($j=$i+1; $j<count($tmp); $j++){
+				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])){
+				}else {
+					continue;
+				}
+				logMsg('DEBUG', 'Weighing relationship based on exchanged messages (To/Cc/From) for '.$email1.' and '.$email2.'.');
+				$contactsRelate[$email1][$email2]['count'] += 2/count($dumpAddress['To']);
+				$contactsRelate[$email2][$email1]['count'] += 2/count($dumpAddress['To']);
+			}
+			unset($tmp);
+		}
+		
+		for ($i=0; $i<count($dumpAddress['Bcc']); $i++){
+			$tmp = $dumpAddress['Bcc'];
+			if ($dumpAddress['From']) {
+				$tmp[] = $dumpAddress['From'][0];
+			}
+			for ($j=$i+1; $j<count($tmp); $j++){
+				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])){
+				}else {
+					continue;
+				}
+				logMsg('DEBUG', 'Weighing relationship based on exchanged messages (Bcc/From) for '.$email1.' and '.$email2.'.');
+				$contactsRelate[$email1][$email2]['count'] += 1/count($dumpAddress['Bcc']);
+				$contactsRelate[$email2][$email1]['count'] += 1/count($dumpAddress['Bcc']);
+			}
+			unset($tmp);
+		}
+		unset($dumpAddress);
 	}
+	unset($all);
+	unset($alls);
+	unset($all_flags);
+	unset($alls_flags);
 	logMsg('USER', 'Fetching done!');
+	logMsg('USER', 'Done weighing relationships based on number of exchanged messages!');
 }
 
-// for all files content/
-// clean, lematize, stopwords, etc
-// keep only the first 25?!? most used words
-function processMessages()
-{
+function detectLanguage(){
+	global $contacts, $up;
+	logMsg('USER', "Detecting most often used language for each contact..");
+	foreach (array_keys($contacts) as $email){
+		echo ' <span>.</span>';
+		flush();
+		
+		$filename = $up.'/content/'.sanitizeFilename($email).'.txt';
+		if (file_exists($filename)){
+			$language = new LangDetect($filename, 1);
+			$contacts[$email]['language'] = $language->Analyze();
+			unset($language);
+			logMsg('DEBUG', "Language for $email is ". $contacts[$email]['language']);
+		}
+	}
+	logMsg('USER', "Language detection done!");
+}
 
+function topWords(){
+	global $contacts, $thresholdWords, $up;
+	logMsg('USER', "Finding top $thresholdWords most often used words for each contact..");
+	foreach(array_keys($contacts) as $email){
+		echo ' <span>.</span>';
+		flush();
+
+		$language = $contacts[$email]['language'];
+		if ($language != "english" && file_exists($up."/stopwords/$language.txt")){
+			$extraStopWords = " | grep -v -w -f {$up}/stopwords/$language.txt";
+		}
+		$f = sanitizeFilename($email);
+		$filename = $up.'/content/'.$f.'.txt';
+		$filenameWords = $up.'/content/'.$f.'_words.txt';
+		$filenameWordsStem = $up.'/content/'.$f.'_words_stem.txt';
+		chdir($up);
+		if (file_exists($filename)){
+			$cmd = 'cat '.$filename.' | tr "A-Z" "a-z" | tr -c "[:alpha:]" " " | tr " " "\n" | sort | uniq -c | sort | grep -v -w -f '.$up.'/stopwords/english.txt'.$extraStopwords.' | grep -E [a-z]{3,} | tr -d " *[:digit:]*\t" | tail -n '.$thresholdWords.' > '.$filenameWords;
+			logMsg('DEBUG', "Running CMD: $cmd");
+			shell_exec($cmd);
+			$contacts[$email]['words'] = file($filenameWords);
+			
+			if ($language == 'english' || $language == 'swedish'){
+				$languageShort = substr($language, 0, 2);
+				$cmd = $up.'/cstlemma/bin/vc2008/cstlemma.exe -e1 -L -f '.$up.'/cstlemma/flexrules_'.$languageShort.' -t- -c"$B" -B"$w\n" < '.$filenameWords.' > '.$filenameWordsStem;
+				logMsg('DEBUG', "Running CMD: $cmd");
+				shell_exec($cmd);
+				$contacts[$email]['wordsStem'] = file($filenameWordsStem);
+				array_shift($contacts[$email]['wordsStem']);
+			}
+		}
+	}
+	logMsg('USER', "Done!");
 }
 
 ?>

@@ -53,9 +53,20 @@ function compareComplexMulti($a1, $a2) {
 
 		// build comparison array
 		$comparison = array ();
+		$exactMatch = false;
 		foreach ($a2Available as $v2) {
-			// calculate similarity based on weights
-			$comparison[] = compareComplex($v1, $v2);
+			if ($v1 == $v2) {
+				$exactMatch = true;
+				break;
+			}
+		}
+		if ($exactMatch) {
+			$comparison[] = 1;
+		} else {
+			foreach ($a2Available as $v2) {
+				// calculate similarity based on weights
+				$comparison[] = compareComplex($v1, $v2);
+			}
 		}
 
 		// get maximal match
@@ -65,6 +76,11 @@ function compareComplexMulti($a1, $a2) {
 
 		unset ($a2Available[$index]);
 	}
+	
+	unset($a1Available);
+	unset($a2Available);
+	unset($comparison);
+	unset($intersection);
 
 	#echo "$weightIdentical - $weightSimilar - $weightTotal<br>";
 	$similarity = ($weightIdentical+$weightSimilar)/$weightTotal*100;

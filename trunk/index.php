@@ -6,16 +6,29 @@
     </head>
     <body>
         <?php
+		require_once ('libs/misc.php');
+
+		@rmdirr('./content');
+		@mkdir('./content');
+		
+		@rmdirr('./results');
+		@mkdir('./results');
+		
         require_once ('config.php');
         
+		logMsg('MEMORY', 'Current allocated memory (initial): '. memory_get_usage());
         getContacts();
+		logMsg('MEMORY', 'Current allocated memory (after Contacts): '. memory_get_usage());
         getContactsFromMessages();
+		logMsg('MEMORY', 'Current allocated memory (after Contacts from Messages): '. memory_get_usage());
 		
 		ksort($contacts);
         
         matchContacts();
+		logMsg('MEMORY', 'Current allocated memory (after Matching Contacts): '. memory_get_usage());
 		
 		pruneContacts();
+		logMsg('MEMORY', 'Current allocated memory (after Pruning Contacts): '. memory_get_usage());
 		
         /*global $allAddresses;
         global $allAddressesReference;
@@ -31,6 +44,25 @@
         $allAddressesReference['aronhen@kth.se'] = 'aron.henriksson@gmail.com';
 		*/
 		getMessages();
+		logMsg('MEMORY', 'Current allocated memory (after Messages): '. memory_get_usage());
+		
+		detectLanguage();
+		logMsg('MEMORY', 'Current allocated memory (after Language Detection): '. memory_get_usage());
+		
+		topWords();
+		logMsg('MEMORY', 'Current allocated memory (after Top Words): '. memory_get_usage());
+		
+		dumpPhpVar('contacts', $contacts);
+		dumpPhpVar('allAddressesReference', $allAddressesReference);
+		dumpPhpVar('contacts', $contacts);
+		
+		relateContacts();
+		ksort($contactsRelate);
+		foreach ($contactsRelate as $key => $relationship){
+			ksort($contactsRelate[$key]);
+		}
+		dumpPhpVar('contactsRelate', $contactsRelate);
+		logMsg('MEMORY', 'Current allocated memory (after Relating Contacts): '. memory_get_usage());
         ?>
     </body>
 </html>
