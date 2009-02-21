@@ -27,7 +27,7 @@ function getContacts() {
 
 	//Get all contacts
 	while ($alls = $all->fetch(PDO::FETCH_ASSOC)) {
-		echo ' .';
+		echo ' <span>.</span>';
 		flush();
 
 		// some contacts have no email
@@ -61,6 +61,8 @@ function getContacts() {
 		$contacts[$alls['PrimaryEmail']]['countBcc'] = 0;
 		$contacts[$alls['PrimaryEmail']]['countTotal'] = 0;
 	}
+	unset($all);
+	unset($alls);
 	logMsg('USER', 'Fetching done!');
 	dumpVar('1_contacts', $contacts);
 }
@@ -84,7 +86,7 @@ function getContactsFromMessages() {
 		if (!$alls_flags['IsInbox'] && !$alls_flags['IsSent']) {
 			continue ;
 		}
-		echo ' .';
+		echo ' <span>.</span>';
 		flush();
 
 		foreach ($alls as $type=>$addresses) {
@@ -163,6 +165,10 @@ function getContactsFromMessages() {
 			}
 		}
 	}
+	unset($all);
+	unset($alls);
+	unset($all_flags);
+	unset($alls_flags);
 	logMsg('USER', 'Fetching done!');
 	dumpVar('2_contacts_and_messages', $contacts);
 }
@@ -237,8 +243,14 @@ function compareTwoContacts($c1, $c2) {
 				}
 			}
 		}
+		unset($c1Names);
+		unset($c2Names);
+		unset($c1NamesSplit);
+		unset($c2NamesSplit);
 		return ($nameSimilarity > $thresholdUsernameSimilarity)?1:0;
 	} else {
+		unset($c1Names);
+		unset($c2Names);
 		return 0;
 	}
 }
@@ -280,10 +292,10 @@ function matchContacts() {
 	while ($contact1 = array_shift($contactsCopy)) {
 		$key1 = $contact1['email'];
 		logMsg('DEBUG', "Matching ".$contact1['email']."...");
-		
-		echo ' .';
+
+		echo ' <span>.</span>';
 		flush();
-		
+
 		foreach ($contactsCopy as $key2=>$contact2) {
 			$contactsWeight[$key1][$key2] = compareTwoContacts($contact1, $contact2);
 			logMsg('DEBUG', "Comparing contacts ".$contact1['email']." and ".$contact2['email']." => ".$contactsWeight[$key1][$key2]);
@@ -321,35 +333,68 @@ function pruneContacts() {
 	global $contacts, $allAddresses, $allAddressesReference;
 	$count = array ();
 	foreach ($contacts as $contact) {
-		if ($contact['countTotal']){
+		if ($contact['countTo'] || $contact['countTotal']) {
 			$count[] = $contact['countTotal'];
 		}
 	}
 	dumpVar('5_contacts_countTotal', $count);
 	$mean = stats_harmonic_mean($count);
-	logMsg('USER', 'Mean set to '.$mean.'*2 (messages count) and pruning contacts...');
+	logMsg('USER', 'Mean set to '.$mean.' *2 = '.($mean = round($mean*2)).' (messages count) and pruning contacts...');
 
-	$allAddresses = array();
-	$allAddressesReference = array();
-	
+	$allAddresses = array ();
+	$allAddressesReference = array ();
+
 	// delete all contacts that do not reach a certain number of messages
 	foreach ($contacts as $key=>$contact) {
-		if ($contact['countTotal'] < $mean*2) {
+		if ($contact['countTotal'] < $mean) {
 			logMsg('DEBUG', 'Pruning contact '.$key.' ('.$contact['countTotal'].')...');
 			unset ($contacts[$key]);
-		}else{
-			$allAddresses = array_merge($allAddresses, array($key));
+		} else {
+			$allAddresses = array_merge($allAddresses, array ($key));
 			$allAddresses = array_merge($allAddresses, $contacts[$key]['secondaryEmails']);
 			$allAddressesReference[$key] = $key;
-			foreach ($contacts[$key]['secondaryEmails'] as $key2){
+			foreach ($contacts[$key]['secondaryEmails'] as $key2) {
 				$allAddressesReference[$key2] = $key;
 			}
 		}
 	}
 	logMsg('USER', 'Pruning done!');
 	dumpVar('6_contacts_pruned', $contacts);
-	
-	
+}
+
+function relateContacts() {
+	global $contactsRelate, $contacts;
+	logMsg('USER', 'Weighing relationships based on text..');
+	$tmp = array_keys($contacts);
+	for ($i = 0; $i < count($tmp); $i++) {
+		echo ' <span>.</span>';
+		flush();
+
+		for ($j = $i+1; $j < count($tmp); $j++) {
+			if (!$contactsRelate[$tmp[$i]][$tmp[$j]]['count']) {
+				continue ;
+			}
+			$langDiff = ($contacts[$tmp[$i]]['language'] == $contacts[$tmp[$j]]['language'])?1:2;
+
+			logMsg('DEBUG', 'Weighing relationship based on text for '.$tmp[$i].' and '.$tmp[$j].'..');
+			$tmp2 = 0;
+			if ($contacts[$tmp[$i]]['words'] && $contacts[$tmp[$j]]['words']) {
+				$tmp2 = count(array_intersect($contacts[$tmp[$i]]['words'], $contacts[$tmp[$j]]['words']));
+			}
+			$contactsRelate[$tmp[$i]][$tmp[$j]]['words'] = $tmp2/$langDiff;
+			$contactsRelate[$tmp[$j]][$tmp[$i]]['words'] = $tmp2/$langDiff;
+
+			$tmp2 = 0;
+			if ($contacts[$tmp[$i]]['wordsStem'] && $contacts[$tmp[$j]]['wordsStem']) {
+				$onlyStem1 = array_diff($contacts[$tmp[$i]]['wordsStem'], $contacts[$tmp[$i]]['words']);
+				$onlyStem2 = array_diff($contacts[$tmp[$j]]['wordsStem'], $contacts[$tmp[$j]]['words']);
+				$tmp2 = count(array_intersect($onlyStem1, $onlyStem2));
+			}
+			$contactsRelate[$tmp[$i]][$tmp[$j]]['wordsStem'] = $tmp2/$langDiff;
+			$contactsRelate[$tmp[$j]][$tmp[$i]]['wordsStem'] = $tmp2/$langDiff;
+		}
+	}
+	logMsg('USER', 'Done weighing relationships based on text!');
 }
 
 ?>

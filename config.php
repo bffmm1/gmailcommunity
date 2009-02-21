@@ -1,12 +1,9 @@
 <?php
 
-require_once ('libs/misc.php');
 require_once ('libs/compare.php');
 require_once ('libs/db.php');
 require_once ('libs/db_message.php');
-
-@rmdirr('./content');
-@mkdir('./content');
+require_once ('libs/langDetect.php');
 
 @apache_setenv('no-gzip', 1);
 @ini_set('zlib.output_compression', 0);
@@ -16,9 +13,10 @@ for ($i = 0; $i < ob_get_level(); $i++) { @ob_end_flush(); }
 
 register_shutdown_function('shutdown');
 @set_time_limit(0);
-@ini_set("memory_limit", "128M");
+@ini_set("memory_limit", "1024M");
+@ini_set("max_execution_time", "600");
 
-global $dbFilename, $db;
+$up = dirname(__FILE__);
 $andreiDb = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
 $aronDb = '../db/aron.henriksson@gmail.com-GoogleMail#database';
 dbChoose();
@@ -30,11 +28,13 @@ $weightMetaphone = 2/3;
 $weightLevenshtein = 2/3*1/3;
 $weightSoundex = 1/3*1/3;
 
+$thresholdWords = 50;
+
 #$logEcho = true;
-#$logEcho = array('USER');
-#$limitRecords = " LIMIT 0,200";
+$logEcho = array('USER', 'MEMORY');
+#$limitRecords = " LIMIT 0,100";
 $filenameId = array_shift(explode('@', basename($dbFilename))).'_'.date('YmdHis');
-$logFilename = './logs/'.$filenameId.'.txt';
+$logFilename = $up.'/logs/'.$filenameId.'.txt';
 $log = fopen($logFilename, 'w');
 if ($log) {
 	logMsg('DEBUG', 'Log opened for writing');
