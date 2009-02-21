@@ -10,7 +10,7 @@ class LangDetect {
 	//reasonable defaults
 	var $ng_number_sub = 350; //default nb of ngrams created from analyzed text
 	var $max_delta = 140000; //stop evaluation deviate strongly
-	var $limit_lines = -1; //limit # line of text-file used (-1 = all lines)
+	var $limit_lines = 500; //limit # line of text-file used (-1 = all lines)
 
 	//Constructor: input= string or txt-file,
 	function LangDetect($input, $sec = false) {
