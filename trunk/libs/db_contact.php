@@ -258,7 +258,7 @@ function compareTwoContacts($c1, $c2) {
 function mergeContacts($a) {
 	global $contacts;
 	$indexPrimary = $a[0];
-	$countTotal = 0;
+	$countTotal = $contacts[$a[0]]['countTotal'];
 	foreach ($a as $key) {
 		if ($contacts[$key]['countTotal'] > $countTotal) {
 			$indexPrimary = $key;
@@ -339,13 +339,13 @@ function pruneContacts() {
 	global $contacts, $allAddresses, $allAddressesReference, $meanMultiplier, $thresholdMean;
 	$count = array ();
 	foreach ($contacts as $contact) {
-		if ($contact['countTo'] || $contact['countTotal']) {
+		if ($contact['countTo'] && ($contact['countTotal'] >= $thresholdMean)) {
 			$count[] = $contact['countTotal'];
 		}
 	}
 	dumpVar('5_contacts_countTotal', $count);
 	$mean = stats_harmonic_mean($count);
-	logMsg('USER', 'Mean set to '.$mean.' *'.$meanMultiplier.' = '.($mean = max(round($mean*$meanMultiplier), $thresholdMean)).' (messages count) and pruning contacts...');
+	logMsg('USER', 'Mean set to '.$mean.' (messages count) and pruning contacts...');
 
 	$allAddresses = array ();
 	$allAddressesReference = array ();
