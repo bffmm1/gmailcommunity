@@ -61,9 +61,9 @@ function getContacts() {
 		$contacts[$alls['PrimaryEmail']]['countBcc'] = 0;
 		$contacts[$alls['PrimaryEmail']]['countTotal'] = 0;
 	}
-	unset($all);
-	unset($alls);
-	logMsg('USER', 'Fetching done!');
+	unset ($all);
+	unset ($alls);
+	logMsg('USER', 'Fetching done! Counting '.count($contacts).' contacts so far.');
 	dumpVar('1_contacts', $contacts);
 }
 
@@ -165,11 +165,11 @@ function getContactsFromMessages() {
 			}
 		}
 	}
-	unset($all);
-	unset($alls);
-	unset($all_flags);
-	unset($alls_flags);
-	logMsg('USER', 'Fetching done!');
+	unset ($all);
+	unset ($alls);
+	unset ($all_flags);
+	unset ($alls_flags);
+	logMsg('USER', 'Fetching done! Counting '.count($contacts).' contacts so far.');
 	dumpVar('2_contacts_and_messages', $contacts);
 }
 
@@ -243,14 +243,14 @@ function compareTwoContacts($c1, $c2) {
 				}
 			}
 		}
-		unset($c1Names);
-		unset($c2Names);
-		unset($c1NamesSplit);
-		unset($c2NamesSplit);
+		unset ($c1Names);
+		unset ($c2Names);
+		unset ($c1NamesSplit);
+		unset ($c2NamesSplit);
 		return ($nameSimilarity > $thresholdUsernameSimilarity)?1:0;
 	} else {
-		unset($c1Names);
-		unset($c2Names);
+		unset ($c1Names);
+		unset ($c2Names);
 		return 0;
 	}
 }
@@ -270,6 +270,12 @@ function mergeContacts($a) {
 		if ($key != $indexPrimary && isset ($contacts[$key])) {
 			logMsg('USER', "Merge ".$key." into ".$indexPrimary."...");
 			# merge contacts[$key] into contacts[indexPrimary]
+			$contacts[$key]['secondaryEmails'][] = $contacts[$key]['email'];
+			if (!$contacts[$indexPrimary]['name']){
+				$contacts[$indexPrimary]['name'] = $contacts[$key]['name'];
+			} elseif ($contacts[$key]['name']) {
+				$contacts[$key]['secondaryNames'][] = $contacts[$key]['name'];
+			}
 			$contacts[$indexPrimary]['secondaryEmails'] = array_unique(array_merge($contacts[$indexPrimary]['secondaryEmails'], $contacts[$key]['secondaryEmails']));
 			$contacts[$indexPrimary]['secondaryNames'] = array_unique(array_merge($contacts[$indexPrimary]['secondaryNames'], $contacts[$key]['secondaryNames']));
 			$contacts[$indexPrimary]['usernames'] = array_unique(array_merge($contacts[$indexPrimary]['usernames'], $contacts[$key]['usernames']));
@@ -325,12 +331,12 @@ function matchContacts() {
 			mergeContacts($toMerge);
 		}
 	}
-	logMsg('USER', 'Merging done!');
+	logMsg('USER', 'Merging done! Counting '.count($contacts).' contacts so far.');
 	dumpVar('4_contacts_merged', $contacts);
 }
 
 function pruneContacts() {
-	global $contacts, $allAddresses, $allAddressesReference;
+	global $contacts, $allAddresses, $allAddressesReference, $meanMultiplier, $thresholdMean;
 	$count = array ();
 	foreach ($contacts as $contact) {
 		if ($contact['countTo'] || $contact['countTotal']) {
@@ -339,7 +345,7 @@ function pruneContacts() {
 	}
 	dumpVar('5_contacts_countTotal', $count);
 	$mean = stats_harmonic_mean($count);
-	logMsg('USER', 'Mean set to '.$mean.' *2 = '.($mean = round($mean*2)).' (messages count) and pruning contacts...');
+	logMsg('USER', 'Mean set to '.$mean.' *'.$meanMultiplier.' = '.($mean = max(round($mean*$meanMultiplier), $thresholdMean)).' (messages count) and pruning contacts...');
 
 	$allAddresses = array ();
 	$allAddressesReference = array ();
@@ -358,12 +364,12 @@ function pruneContacts() {
 			}
 		}
 	}
-	logMsg('USER', 'Pruning done!');
+	logMsg('USER', 'Pruning done! Counting '.count($contacts).' contacts so far.');
 	dumpVar('6_contacts_pruned', $contacts);
 }
 
 function relateContacts() {
-	global $contactsRelate, $contacts;
+	global $contactsRelate, $contacts, $thresholdSharedMessages;
 	logMsg('USER', 'Weighing relationships based on text..');
 	$tmp = array_keys($contacts);
 	for ($i = 0; $i < count($tmp); $i++) {
@@ -371,7 +377,9 @@ function relateContacts() {
 		flush();
 
 		for ($j = $i+1; $j < count($tmp); $j++) {
-			if (!$contactsRelate[$tmp[$i]][$tmp[$j]]['count']) {
+			if ($contactsRelate[$tmp[$i]][$tmp[$j]]['count'] < $thresholdSharedMessages) {
+				unset ($contactsRelate[$tmp[$i]][$tmp[$j]]);
+				unset ($contactsRelate[$tmp[$j]][$tmp[$i]]);
 				continue ;
 			}
 			$langDiff = ($contacts[$tmp[$i]]['language'] == $contacts[$tmp[$j]]['language'])?1:2;
@@ -384,16 +392,28 @@ function relateContacts() {
 			$contactsRelate[$tmp[$i]][$tmp[$j]]['words'] = $tmp2/$langDiff;
 			$contactsRelate[$tmp[$j]][$tmp[$i]]['words'] = $tmp2/$langDiff;
 
-			$tmp2 = 0;
+			$tmp3 = 0;
 			if ($contacts[$tmp[$i]]['wordsStem'] && $contacts[$tmp[$j]]['wordsStem']) {
 				$onlyStem1 = array_diff($contacts[$tmp[$i]]['wordsStem'], $contacts[$tmp[$i]]['words']);
 				$onlyStem2 = array_diff($contacts[$tmp[$j]]['wordsStem'], $contacts[$tmp[$j]]['words']);
-				$tmp2 = count(array_intersect($onlyStem1, $onlyStem2));
+				$tmp3 = count(array_intersect($onlyStem1, $onlyStem2));
 			}
-			$contactsRelate[$tmp[$i]][$tmp[$j]]['wordsStem'] = $tmp2/$langDiff;
-			$contactsRelate[$tmp[$j]][$tmp[$i]]['wordsStem'] = $tmp2/$langDiff;
+			$contactsRelate[$tmp[$i]][$tmp[$j]]['wordsStem'] = $tmp3/$langDiff;
+			$contactsRelate[$tmp[$j]][$tmp[$i]]['wordsStem'] = $tmp3/$langDiff;
+
+			if (!$tmp2) {
+				unset ($contactsRelate[$tmp[$i]][$tmp[$j]]);
+				unset ($contactsRelate[$tmp[$j]][$tmp[$i]]);
+			} else {
+				$tmp4 = 0.5*$contactsRelate[$tmp[$i]][$tmp[$j]]['count'] + 
+					0.3*$contactsRelate[$tmp[$i]][$tmp[$j]]['wordsStem'] +
+					0.2*$contactsRelate[$tmp[$i]][$tmp[$j]]['words'];
+				$contactsRelate[$tmp[$i]][$tmp[$j]]['strength'] = $tmp4;
+				$contactsRelate[$tmp[$j]][$tmp[$i]]['strength'] = $tmp4;
+			}
 		}
 	}
+
 	logMsg('USER', 'Done weighing relationships based on text!');
 }
 

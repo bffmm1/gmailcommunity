@@ -14,7 +14,7 @@ for ($i = 0; $i < ob_get_level(); $i++) { @ob_end_flush(); }
 register_shutdown_function('shutdown');
 @set_time_limit(0);
 @ini_set("memory_limit", "1024M");
-@ini_set("max_execution_time", "600");
+@ini_set("max_execution_time", "1200");
 
 $up = dirname(__FILE__);
 $andreiDb = '../db/andrei.neculau@gmail.com-GoogleMail#database[1]';
@@ -29,6 +29,9 @@ $weightLevenshtein = 2/3*1/3;
 $weightSoundex = 1/3*1/3;
 
 $thresholdWords = 50;
+$meanMultiplier = 4;
+$thresholdMean = 5;
+$thresholdSharedMessages = 3;
 
 #$logEcho = true;
 $logEcho = array('USER', 'MEMORY');
