@@ -249,9 +249,33 @@ function topWords() {
 		$filenameWordsStem = $up.'/content/'.$f.'_words_stem.txt';
 		chdir($up);
 		if (file_exists($filename)) {
-			$cmd = 'cat '.$filename.' | tr "A-Z" "a-z" | tr -c "[:alpha:]" " " | tr " " "\n" | sort | uniq -c | sort | grep -v -w -f '.$up.'/stopwords/english.txt'.$extraStopwords.' | grep -E [a-z]{3,} | tr -d " *[:digit:]*\t" | tail -n '.$thresholdWords.' > '.$filenameWords;
+			$cmd = 'cat '.$filename.' | tr "A-Z" "a-z" | tr -c "[:alpha:]" " " | tr " " "\n" | sort | uniq -c | sort | grep -v -w -f '.$up.'/stopwords/english.txt | grep -E [a-z]{3,} | tr -d " *[:digit:]*\t" | tail -n '.($thresholdWords*4).' > '.$filenameWords;
 			logMsg('DEBUG', "Running CMD: $cmd");
 			shell_exec($cmd);
+			
+			#detect language
+			$language = new LangDetect($filenameWords, -1);
+			$lang = $language->Analyze();
+			$contacts[$email]['language'] = $lang[0];
+			$language = $lang[0];
+			foreach ($lang as $l){
+				if ($l != 'english') {
+					unset ($language);
+					$language = $l;
+					break;
+				}
+			}
+			if ($language != 'english'){
+				logMsg('USER', "Language for $email is ".$contacts[$email]['language']." (but removing also $language stopwords)");
+			} else {
+				logMsg('USER', "Language for $email is ".$contacts[$email]['language']);
+			}
+			
+			if ($language != 'english'){
+				$cmd = 'cat '.$filenameWords.' | tr "A-Z" "a-z" | tr -c "[:alpha:]" " " | tr " " "\n" | sort | uniq -c | sort | grep -v -w -f '.$up.'/stopwords/'.$contacts[$email]['language'].'.txt | grep -E [a-z]{3,} | tr -d " *[:digit:]*\t" | tail -n '.$thresholdWords.' > '.$filenameWords;
+				logMsg('DEBUG', "Running CMD: $cmd");
+				shell_exec($cmd);
+			}
 			$contacts[$email]['words'] = array_reverse(array_trim(file($filenameWords)));
 
 			if ($language == 'english' || $language == 'swedish') {
