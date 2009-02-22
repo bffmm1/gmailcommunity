@@ -25,7 +25,7 @@ function getMessages()
 	//Get all messages
 	while ($row = $all->fetch(PDO::FETCH_ASSOC))
 	{
-		$dumpAddress = array();
+		$dumpAddress = array ();
 		//Get flags
 		$alls_flags = $all_flags->fetch(PDO::FETCH_ASSOC);
 
@@ -53,11 +53,14 @@ function getMessages()
 
 			//TODO: new REGEXP needed!!!!! for cases when fullname is email-like
 
+			if (!$addresses) {
+				continue ;
+			}
 			//Retrieve an array with recipients
 			$addresses .= ',';
-			preg_match_all("/(?:(?:[,;\s]*)([^@]+@[^@]+)(?=,))/", $addresses, $matches);
+			preg_match_all(REGEXP_RECIPIENTS, $addresses, $matches);
 			array_shift($matches);
-			$addresses = $matches[0];
+			$addresses = array_merge($matches[0], $matches[1]);
 
 			//Iterate through the recipients (as there may be multiple)
 			foreach ($addresses as $address)
@@ -73,7 +76,7 @@ function getMessages()
 				}
 
 				//If there is a match
-				if (preg_match("/^(.+) <([^@]+@[^@]+)>$/", $address, $matches))
+				if (preg_match(REGEXP_FULLNAME_EMAIL, $address, $matches))
 				{
 					//Extract the name and address portions
 					array_shift($matches);
@@ -93,7 +96,7 @@ function getMessages()
 
 				//Get primary e-mail of contact
 				$email = $allAddressesReference[$address];
-				
+
 				if ($type == 'Cc') {
 					$type = 'To';
 				}
@@ -133,7 +136,7 @@ function getMessages()
 					//{
 					$body = "\n\n".$body;
 					//}
-					
+
 					//For romanian consistency
 					$body = str_replace('ș', 'ş', $body);
 					$body = str_replace('ț', 'ţ', $body);
@@ -142,7 +145,7 @@ function getMessages()
 					if (!fwrite($file, $body))
 					{
 						//Generate log message if nothing was written
-						logMsg("DEBUG", "Unable to write to: ". basename($filename));
+						logMsg("DEBUG", "Unable to write to: ".basename($filename));
 					}
 
 					//Flush the output buffer
@@ -154,90 +157,90 @@ function getMessages()
 				else
 				{
 					//Generate log message
-					logMsg('DEBUG', "Unable to open file: ". basename($filename));
+					logMsg('DEBUG', "Unable to open file: ".basename($filename));
 				}
 				//}
 			}
 		}
-		unset($body);
-		
+		unset ($body);
+
 		// memory problems with the following two loops
-		for ($i=0; $i<count($dumpAddress['To']); $i++){
+		for ($i = 0; $i < count($dumpAddress['To']); $i++) {
 			$tmp = $dumpAddress['To'];
 			if ($dumpAddress['From']) {
 				$tmp[] = $dumpAddress['From'][0];
 			}
-			for ($j=$i+1; $j<count($tmp); $j++){
-				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])){
-				}else {
-					continue;
+			for ($j = $i+1; $j < count($tmp); $j++) {
+				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])) {
+				} else {
+					continue ;
 				}
 				if ($email1 == $email2) {
-					continue;
+					continue ;
 				}
 				logMsg('DEBUG', 'Weighing relationship based on exchanged messages (To/Cc/From) for '.$email1.' and '.$email2.'.');
 				$contactsRelate[$email1][$email2]['count'] += 2/count($dumpAddress['To']);
 				$contactsRelate[$email2][$email1]['count'] += 2/count($dumpAddress['To']);
 			}
-			unset($tmp);
+			unset ($tmp);
 		}
-		
-		for ($i=0; $i<count($dumpAddress['Bcc']); $i++){
+
+		for ($i = 0; $i < count($dumpAddress['Bcc']); $i++) {
 			$tmp = $dumpAddress['Bcc'];
 			if ($dumpAddress['From']) {
 				$tmp[] = $dumpAddress['From'][0];
 			}
-			for ($j=$i+1; $j<count($tmp); $j++){
-				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])){
-				}else {
-					continue;
+			for ($j = $i+1; $j < count($tmp); $j++) {
+				if (($email1 = $allAddressesReference[$tmp[$i]]) && ($email2 = $allAddressesReference[$tmp[$j]])) {
+				} else {
+					continue ;
 				}
 				if ($email1 == $email2) {
-					continue;
+					continue ;
 				}
 				logMsg('DEBUG', 'Weighing relationship based on exchanged messages (Bcc/From) for '.$email1.' and '.$email2.'.');
 				$contactsRelate[$email1][$email2]['count'] += 1/count($dumpAddress['Bcc']);
 				$contactsRelate[$email2][$email1]['count'] += 1/count($dumpAddress['Bcc']);
 			}
-			unset($tmp);
+			unset ($tmp);
 		}
-		unset($dumpAddress);
+		unset ($dumpAddress);
 	}
-	unset($all);
-	unset($alls);
-	unset($all_flags);
-	unset($alls_flags);
+	unset ($all);
+	unset ($alls);
+	unset ($all_flags);
+	unset ($alls_flags);
 	logMsg('USER', 'Fetching done!');
 	logMsg('USER', 'Done weighing relationships based on number of exchanged messages!');
 }
 
-function detectLanguage(){
+function detectLanguage() {
 	global $contacts, $up;
 	logMsg('USER', "Detecting most often used language for each contact..");
-	foreach (array_keys($contacts) as $email){
-		echo ' <span>.</span>';
-		flush();
-		
+	foreach (array_keys($contacts) as $email) {
+		#echo ' <span>.</span>';
+		#flush();
+
 		$filename = $up.'/content/'.sanitizeFilename($email).'.txt';
-		if (file_exists($filename)){
+		if (file_exists($filename)) {
 			$language = new LangDetect($filename, 1);
 			$contacts[$email]['language'] = $language->Analyze();
-			unset($language);
-			logMsg('DEBUG', "Language for $email is ". $contacts[$email]['language']);
+			unset ($language);
+			logMsg('USER', "Language for $email is ".$contacts[$email]['language']);
 		}
 	}
 	logMsg('USER', "Language detection done!");
 }
 
-function topWords(){
+function topWords() {
 	global $contacts, $thresholdWords, $up;
 	logMsg('USER', "Finding top $thresholdWords most often used words for each contact..");
-	foreach(array_keys($contacts) as $email){
+	foreach (array_keys($contacts) as $email) {
 		echo ' <span>.</span>';
 		flush();
 
 		$language = $contacts[$email]['language'];
-		if ($language != "english" && file_exists($up."/stopwords/$language.txt")){
+		if ($language != "english" && file_exists($up."/stopwords/$language.txt")) {
 			$extraStopWords = " | grep -v -w -f {$up}/stopwords/$language.txt";
 		}
 		$f = sanitizeFilename($email);
@@ -245,13 +248,13 @@ function topWords(){
 		$filenameWords = $up.'/content/'.$f.'_words.txt';
 		$filenameWordsStem = $up.'/content/'.$f.'_words_stem.txt';
 		chdir($up);
-		if (file_exists($filename)){
+		if (file_exists($filename)) {
 			$cmd = 'cat '.$filename.' | tr "A-Z" "a-z" | tr -c "[:alpha:]" " " | tr " " "\n" | sort | uniq -c | sort | grep -v -w -f '.$up.'/stopwords/english.txt'.$extraStopwords.' | grep -E [a-z]{3,} | tr -d " *[:digit:]*\t" | tail -n '.$thresholdWords.' > '.$filenameWords;
 			logMsg('DEBUG', "Running CMD: $cmd");
 			shell_exec($cmd);
 			$contacts[$email]['words'] = array_reverse(array_trim(file($filenameWords)));
-			
-			if ($language == 'english' || $language == 'swedish'){
+
+			if ($language == 'english' || $language == 'swedish') {
 				$languageShort = substr($language, 0, 2);
 				$cmd = $up.'/cstlemma/bin/vc2008/cstlemma.exe -e1 -L -f '.$up.'/cstlemma/flexrules_'.$languageShort.' -t- -c"$B" -B"$w\n" < '.$filenameWords.' > '.$filenameWordsStem;
 				logMsg('DEBUG', "Running CMD: $cmd");
