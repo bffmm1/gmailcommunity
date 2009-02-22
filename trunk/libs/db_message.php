@@ -256,9 +256,17 @@ function topWords() {
 			#detect language
 			$language = new LangDetect($filenameWords, -1);
 			$lang = $language->Analyze();
-			$contacts[$email]['language'] = $lang[0];
-			$language = $lang[0];
-			foreach ($lang as $l){
+			print_r($lang);
+			$languages = array_keys($lang);
+			$contacts[$email]['language'] = $languages[0];
+			$language = $languages[0];
+			$score = array_shift($score = $lang);
+			array_shift($lang);
+			
+			foreach ($lang as $l => $lscore){
+				if ($lscore-$score > 7000){
+					break;
+				}
 				if ($l != 'english') {
 					unset ($language);
 					$language = $l;
@@ -266,9 +274,9 @@ function topWords() {
 				}
 			}
 			if ($language != 'english'){
-				logMsg('USER', "Language for $email is ".$contacts[$email]['language']." (but removing also $language stopwords)");
+				logMsg('DEBUG', "Language for $email is ".$contacts[$email]['language']." (but removing also $language stopwords)");
 			} else {
-				logMsg('USER', "Language for $email is ".$contacts[$email]['language']);
+				logMsg('DEBUG', "Language for $email is ".$contacts[$email]['language']);
 			}
 			
 			if ($language != 'english'){
