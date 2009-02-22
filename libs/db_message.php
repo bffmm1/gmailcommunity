@@ -256,7 +256,6 @@ function topWords() {
 			#detect language
 			$language = new LangDetect($filenameWords, -1);
 			$lang = $language->Analyze();
-			print_r($lang);
 			$languages = array_keys($lang);
 			$contacts[$email]['language'] = $languages[0];
 			$language = $languages[0];
