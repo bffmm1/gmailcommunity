@@ -10,6 +10,7 @@
         <hr style="clear:both">
         <?php
         require_once ('libs/misc.php');
+		@ini_set("memory_limit", "64M");
         
         $contacts = file_get_contents('./results/contacts.txt');
         $contactsRelate = file_get_contents('./results/contactsRelate.txt');
