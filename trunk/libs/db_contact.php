@@ -353,7 +353,7 @@ function pruneContacts() {
 
 	// delete all contacts that do not reach a certain number of messages
 	foreach ($contacts as $key=>$contact) {
-		if ($contact['countTotal'] < $mean) {
+		if (!$contact['countTo'] || $contact['countTotal'] < $mean) {
 			logMsg('DEBUG', 'Pruning contact '.$key.' ('.$contact['countTotal'].')...');
 			unset ($contacts[$key]);
 		} else {
