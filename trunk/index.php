@@ -52,8 +52,8 @@
 		getMessages();
 		logMsg('MEMORY', 'Current allocated memory (after Messages): '. memory_get_usage());
 		
-		detectLanguage();
-		logMsg('MEMORY', 'Current allocated memory (after Language Detection): '. memory_get_usage());
+		#detectLanguage();
+		#logMsg('MEMORY', 'Current allocated memory (after Language Detection): '. memory_get_usage());
 		
 		topWords();
 		logMsg('MEMORY', 'Current allocated memory (after Top Words): '. memory_get_usage());
