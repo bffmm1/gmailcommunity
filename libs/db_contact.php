@@ -10,6 +10,8 @@ function automaticUsername($username) {
 	|| (strpos($username, 'list') !== false)
 	|| (strpos($username, 'webmaster') !== false)
 	|| (strpos($username, 'spam') !== false)
+	|| (strpos($username, 'net') !== false)
+	|| (strpos($username, 'world') !== false)
 	|| (strpos($username, 'mailing') !== false)) {
 		return true;
 	}
@@ -340,7 +342,7 @@ function pruneContacts() {
 	global $contacts, $allAddresses, $allAddressesReference, $meanMultiplier, $thresholdMean;
 	$count = array ();
 	foreach ($contacts as $contact) {
-		if ($contact['countTo'] && ($contact['countTotal'] >= $thresholdMean)) {
+		if (($contact['countTo'] > 1) && ($contact['countTotal'] >= $thresholdMean)) {
 			$count[] = $contact['countTotal'];
 		}
 	}
@@ -353,7 +355,7 @@ function pruneContacts() {
 
 	// delete all contacts that do not reach a certain number of messages
 	foreach ($contacts as $key=>$contact) {
-		if (!$contact['countTo'] || $contact['countTotal'] < $mean) {
+		if (($contact['countTo'] <= 1) || $contact['countTotal'] < $mean) {
 			logMsg('DEBUG', 'Pruning contact '.$key.' ('.$contact['countTotal'].')...');
 			unset ($contacts[$key]);
 		} else {
