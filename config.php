@@ -30,7 +30,7 @@ $weightSoundex = 1/3*1/3;
 
 $thresholdWords = 50;
 $meanMultiplier = 4;
-$thresholdMean = 3;
+$thresholdMean = 5;
 $thresholdSharedMessages = 3;
 
 #$logEcho = true;
