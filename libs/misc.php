@@ -1,5 +1,8 @@
 <?php
 
+define('REGEXP_RECIPIENTS', "/(?:(?=[,;\s]*)(\"[^@]+@[^@]+\" \<[^@]+@[^@]+\>)(?=,))|(?:(?:[,;\s]*)([^@]+@[^@\"]+)(?=,))/");
+define('REGEXP_FULLNAME_EMAIL', "/^(.+) <([^@]+@[^@]+)>$/");
+
 function logMsg($type, $msg) {
 	global $log, $logEcho;
 	$output = "$type - $msg";
