@@ -96,9 +96,10 @@ function getContactsFromMessages() {
 
 			// TODO: new REGEXP needed!!!!! for cases when fullname is email-like
 			$addresses .= ',';
-			preg_match_all("/(?:(?:[,;\s]*)([^@]+@[^@]+)(?=,))/", $addresses, $matches);
+			logMsg('DEBUG', 'Parsing recipients '.$addresses);
+			preg_match_all(REGEXP_RECIPIENTS, $addresses, $matches);
 			array_shift($matches);
-			$addresses = $matches[0];
+			$addresses = array_merge($matches[0], $matches[1]);
 
 			foreach ($addresses as $address) {
 				$fullname = '';
@@ -109,7 +110,7 @@ function getContactsFromMessages() {
 
 				logMsg('DEBUG', 'Parsing '.$address);
 
-				if (preg_match("/^(.+) <([^@]+@[^@]+)>$/", $address, $matches)) {
+				if (preg_match(REGEXP_FULLNAME_EMAIL, $address, $matches)) {
 					array_shift($matches);
 					logMsg('DEBUG', 'Matched: '.join(' -- ', $matches));
 					$fullname = $matches[0];
@@ -158,7 +159,7 @@ function getContactsFromMessages() {
 					$contacts[$address]['countFrom'] = 0;
 					$contacts[$address]['countCc'] = 0;
 					$contacts[$address]['countBcc'] = 0;
-					$contacts[$address]['countTotal'] = 0;
+					$contacts[$address]['countTotal'] = 1;
 
 					$contacts[$address]['count'.$type] = 1;
 				}
@@ -344,7 +345,7 @@ function pruneContacts() {
 		}
 	}
 	dumpVar('5_contacts_countTotal', $count);
-	$mean = stats_harmonic_mean($count);
+	$mean = ceil(stats_harmonic_mean($count));
 	logMsg('USER', 'Mean set to '.$mean.' (messages count) and pruning contacts...');
 
 	$allAddresses = array ();
